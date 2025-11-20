@@ -1,31 +1,23 @@
 name: Java CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up JDK 11
-      uses: actions/setup-java@v4
-      with:
-        java-version: '11'
-        distribution: 'temurin'
-    - name: Build with Maven
-    -  run: mvn -B package --file project/pom.xml
-- Commit changes (summary: Point CI to project/pom.xml).
-B — Quick debug alternative (compile with javac)- Edit .github/workflows/ci.yml.
-- Replace the Maven build step block with these exact lines:
-      - name: Compile Java
-        run: |
-          find . -name "*.java" > sources.txt
-          javac -d out @sources.txt
-      - name: Run Main (optional)
-        run: java -cp out com.uddhriti.superstore.Main
-- Commit changes (summary: Use javac for CI debug).
-- Open Actions → view the run → read the javac output to fix package or compile errors.
-Quick verification checklist (after you commit)- Confirm repo root shows a file named exactly: pom.xml.
-- Open Actions → latest Java CI run → if it still fails, copy the first 8–12 lines of the failing step log and paste them here.
-If you want, I will now produce:- a different pom.xml if your Main class has another package/name, or
-- the exact one-line edit to .github/workflows/ci.yml if your pom.xml lives in a specific subfolder — tell me the subfolder name.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: temurin
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
