@@ -1,5 +1,9 @@
+# Java / Maven
 *.class
 /target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/
 /.idea/
+/*.iml
 *.log
-*.iml
+.DS_Store
