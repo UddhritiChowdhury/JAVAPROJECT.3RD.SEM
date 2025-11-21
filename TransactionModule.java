@@ -1,4 +1,5 @@
-package store;
+
+       package store;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -11,13 +12,15 @@ public class TransactionModule {
         public final String id;
         public String name;
         public String category;
+        public double purchaseCost;
         public double price;
         public int stock;
 
-        public Product(String id, String name, String category, double price, int stock) {
+        public Product(String id, String name, String category, double purchaseCost, double price, int stock) {
             this.id = id;
             this.name = name;
             this.category = category;
+            this.purchaseCost = purchaseCost;
             this.price = price;
             this.stock = stock;
         }
@@ -113,9 +116,10 @@ public class TransactionModule {
             System.out.println("4. List products");
             System.out.println("5. Customer info");
             System.out.println("6. Seller info");
-            System.out.println("7. View sales");
-            System.out.println("8. Search product by name/category");
-            System.out.println("9. Logout");
+            System.out.println("7. Delete product");
+            System.out.println("8. View sales");
+            System.out.println("9. Search product by name/category");
+            System.out.println("10. Logout");
             System.out.print("Choose: ");
             String choice = sc.nextLine().trim();
 
@@ -126,15 +130,34 @@ public class TransactionModule {
                 case "4": listProducts(); break;
                 case "5": customerInfo(sc, role); break;
                 case "6": sellerInfo(sc, role); break;
-                case "7": viewSales(); break;
-                case "8": searchProducts(sc); break;
-                case "9": System.out.println("Goodbye!"); return;
+                case "7": deleteProduct(sc, role); break;
+                case "8": viewSales(); break;
+                case "9": searchProducts(sc); break;
+                case "10": System.out.println("Goodbye!"); return;
                 default: System.out.println("Invalid option.");
             }
         }
     }
 
     // ===== Actions =====
+
+    //Delete product
+    private static void deleteProduct(Scanner sc, String role) {
+    if (!"admin".equals(role)) {
+        System.out.println("Permission denied: only admin can delete products.");
+        return;
+    }
+    System.out.println("=== Delete Product ===");
+    System.out.print("Product ID to delete: ");
+    String id = sc.nextLine().trim();
+
+    if (StoreDB.products.containsKey(id)) {
+        StoreDB.products.remove(id);
+        System.out.println("Product ID " + id + " has been successfully removed.");
+    } else {
+        System.out.println("Error: Product ID " + id + " not found.");
+    }
+}
 
     // Add new product (admin-only)
     private static void addProduct(Scanner sc, String role) {
@@ -154,10 +177,10 @@ public class TransactionModule {
         System.out.print("Category: ");
         String cat = sc.nextLine().trim();
         System.out.print("Price: ");
-        double price = parseDouble(sc.nextLine());
+        double price = getValidDouble(sc, "Price: ");
         System.out.print("Stock: ");
-        int stock = parseInt(sc.nextLine());
-
+        int stock = getValidInt(sc, "Stock: ");
+        
         StoreDB.products.put(id, new Product(id, name, cat, price, stock));
         System.out.println("Product added: " + id);
     }
@@ -185,13 +208,11 @@ public class TransactionModule {
         String cat = sc.nextLine().trim();
         if (!cat.isEmpty()) p.category = cat;
 
-        System.out.print("New price (" + p.price + "): ");
-        String priceStr = sc.nextLine().trim();
-        if (!priceStr.isEmpty()) p.price = parseDouble(priceStr);
+        double newPrice = getValidDouble(sc, "New price (" + p.price + "): ");
+        if (newPrice != -1) p.price = newPrice;
 
-        System.out.print("New stock (" + p.stock + "): ");
-        String stockStr = sc.nextLine().trim();
-        if (!stockStr.isEmpty()) p.stock = parseInt(stockStr);
+        int newStock = getValidInt(sc, "New stock (" + p.stock + "): "); 
+        if (newStock != -1) p.stock = newStock;
 
         System.out.println("Updated: " + id);
     }
@@ -207,7 +228,7 @@ public class TransactionModule {
             return;
         }
         System.out.print("Quantity: ");
-        int qty = parseInt(sc.nextLine());
+        int qty = getValidInt(sc, "Quantity: ");
         if (qty <= 0 || qty > p.stock) {
             System.out.println("Invalid quantity. Available stock: " + p.stock);
             return;
@@ -397,14 +418,42 @@ public class TransactionModule {
         });
     }
 
-    // ===== Helpers =====
-    private static double parseDouble(String s) {
-        try { return Double.parseDouble(s); } catch (Exception e) { return -1; }
+    // ===== Robust Input Handlers (New Code) =====
+private static double getValidDouble(Scanner sc, String prompt) {
+    double result = -1;
+    while (true) {
+        System.out.print(prompt);
+        String input = sc.nextLine().trim();
+        try {
+            result = Double.parseDouble(input);
+            if (result >= 0) { // Assume price/stock cannot be negative
+                return result;
+            } else {
+                System.out.println("Error: Value must be zero or positive.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Please enter a valid number.");
+        }
     }
-    private static int parseInt(String s) {
-        try { return Integer.parseInt(s); } catch (Exception e) { return -1; }
+}
+
+private static int getValidInt(Scanner sc, String prompt) {
+    int result = -1;
+    while (true) {
+        System.out.print(prompt);
+        String input = sc.nextLine().trim();
+        try {
+            result = Integer.parseInt(input);
+            if (result >= 0) { // Assume quantity/stock cannot be negative
+                return result;
+            } else {
+                System.out.println("Error: Value must be zero or positive.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Please enter a valid whole number.");
+        }
     }
-    private static String sellerIdForUser(String username) {
+}    private static String sellerIdForUser(String username) {
         // Simple mapping: username to seller by name match, else first seller
         for (Seller s : StoreDB.sellers.values()) {
             if (s.name.equalsIgnoreCase(username)) return s.id;
