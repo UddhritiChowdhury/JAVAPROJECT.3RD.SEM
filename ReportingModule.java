@@ -12,7 +12,8 @@ public class ReportingModule {
         System.out.println("2. Top-selling products");
         System.out.println("3. Sales by seller");
         System.out.println("4. Inventory below threshold");
-        System.out.println("5. Back");
+        System.out.println("5. **Gross Profit Report**");
+        System.out.println("6. Back");
     }
 
     public static void handleReports(Scanner sc) {
@@ -29,7 +30,8 @@ public class ReportingModule {
                     int t = parseInt(sc.nextLine());
                     inventoryBelowThreshold(t <= 0 ? 5 : t);
                     break;
-                case "5": return;
+                case "5": grossProfitReport(); break;
+                case "6": return;
                 default: System.out.println("Invalid option.");
             }
         }
@@ -114,6 +116,34 @@ public class ReportingModule {
         try { return Integer.parseInt(s); } catch (Exception e) { return -1; }
     }
 
+    // 5) Gross Profit Report
+    public static void grossProfitReport() {
+       double totalRevenue = 0.0;
+       double totalCost = 0.0;
+
+       for (TransactionModule.Sale s : TransactionModule.StoreDB.sales.values()) {
+          TransactionModule.Product p = TransactionModule.StoreDB.products.get(s.productId);
+          double revenue = s.unitPrice * s.quantity;
+            totalRevenue += revenue;
+
+          if (p != null) {
+            // Must ensure the product model has the purchaseCost field
+            double costOfGoodsSold = p.purchaseCost * s.quantity; 
+            totalCost += costOfGoodsSold;
+          } else {
+            // Handle case where product might have been deleted
+            System.out.println("Warning: Product " + s.productId + " not found for cost calculation.");
+          }
+    }
+
+        double grossProfit = totalRevenue - totalCost;
+
+        System.out.println("=== Gross Profit Report ===");
+        System.out.printf("Total Revenue: $%.2f%n", totalRevenue);
+        System.out.printf("Total Cost of Goods Sold (COGS): $%.2f%n", totalCost);
+        System.out.printf("----------------------------------------%n");
+        System.out.printf("GROSS PROFIT: $%.2f%n", grossProfit);
+}
     // Standalone runner for quick testing (assumes StoreDB seeded elsewhere)
     public static void main(String[] args) {
         TransactionModule.StoreDB.seedDemoData();
