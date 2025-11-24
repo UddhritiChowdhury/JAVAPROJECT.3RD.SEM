@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Superstore Management System</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #eef2f3;
+    margin: 0;
+}
+
+header {
+    background: #232f3e;
+    padding: 20px;
+    color: white;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.container {
+    width: 90%;
+    margin: auto;
+    margin-top: 30px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0px 0px 10px gray;
+}
+
+.card h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+input, select {
+    width: 95%;
+    padding: 10px;
+    margin: 5px 0 15px;
+    border-radius: 6px;
+    border: 1px solid #888;
+}
+
+button {
+    padding: 10px 15px;
+    border: none;
+    background: #2874f0;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0b5ed7;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+table th, table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.delete-btn {
+    background: red;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+}
+.status-btn {
+    background: green;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<header>🛒 Superstore Management System</header>
+
+<div class="container">
+
+<!-- Add Product Section -->
+<div class="card">
+    <h2>Add Product</h2>
+    <input id="productName" placeholder="Product Name">
+    <input id="productPrice" placeholder="Price" type="number">
+    <input id="productQty" placeholder="Quantity" type="number">
+    <button onclick="addProduct()">Add Product</button>
+
+    <table id="productTable"></table>
+</div>
+
+<!-- Customer Section -->
+<div class="card">
+    <h2>Add Customer</h2>
+    <input id="customerName" placeholder="Customer Name">
+    <input id="customerPhone" placeholder="Phone Number">
+    <button onclick="addCustomer()">Add Customer</button>
+
+    <table id="customerTable"></table>
+</div>
+
+<!-- Order Section -->
+<div class="card">
+    <h2>Create Order</h2>
+    <select id="orderProduct"></select>
+    <select id="orderCustomer"></select>
+    <input id="orderQty" placeholder="Order Quantity" type="number">
+    <button onclick="createOrder()">Place Order</button>
+
+    <table id="orderTable"></table>
+</div>
+
+</div>
+
+<script>
+let products = JSON.parse(localStorage.getItem("products")) || [];
+let customers = JSON.parse(localStorage.getItem("customers")) || [];
+let orders = JSON.parse(localStorage.getItem("orders")) || [];
+
+// SAVE FUNCTION
+function save() {
+    localStorage.setItem("products", JSON.stringify(products));
+    localStorage.setItem("customers", JSON.stringify(customers));
+    localStorage.setItem("orders", JSON.stringify(orders));
+}
+
+// ADD PRODUCT
+function addProduct() {
+    let name = productName.value;
+    let price = productPrice.value;
+    let qty = productQty.value;
+
+    if(!name || !price || !qty) return alert("Please fill all fields!");
+
+    products.push({name, price, qty});
+    save();
+    renderProducts();
+    updateDropdowns();
+}
+
+// ADD CUSTOMER
+function addCustomer() {
+    let name = customerName.value;
+    let phone = customerPhone.value;
+
+    if(!name || !phone) return alert("Enter details");
+
+    customers.push({name, phone});
+    save();
+    renderCustomers();
+    updateDropdowns();
+}
+
+// CREATE ORDER
+function createOrder() {
+    let product = orderProduct.value;
+    let customer = orderCustomer.value;
+    let qty = orderQty.value;
+
+    if(!product || !customer || !qty) return alert("Fill complete order info");
+
+    orders.push({product, customer, qty, status:"Pending"});
+    save();
+    renderOrders();
+}
+
+// RENDER PRODUCT TABLE
+function renderProducts() {
+    productTable.innerHTML = `
+    <tr><th>Product</th><th>Price</th><th>Qty</th><th>Delete</th></tr>
+    `;
+
+    products.forEach((p,i)=>{
+        productTable.innerHTML += `
+        <tr>
+            <td>${p.name}</td>
+            <td>${p.price}</td>
+            <td>${p.qty}</td>
+            <td><button class="delete-btn" onclick="deleteProduct(${i})">Delete</button></td>
+        </tr>`;
+    });
+}
+
+// DELETE PRODUCT
+function deleteProduct(i){
+    products.splice(i,1);
+    save();
+    renderProducts();
+    updateDropdowns();
+}
+
+// RENDER CUSTOMERS
+function renderCustomers(){
+    customerTable.innerHTML = `
+    <tr><th>Name</th><th>Phone</th><th>Delete</th></tr>
+    `;
+    customers.forEach((c,i)=>{
+        customerTable.innerHTML += `
+        <tr>
+            <td>${c.name}</td>
+            <td>${c.phone}</td>
+            <td><button class="delete-btn" onclick="deleteCustomer(${i})">Delete</button></td>
+        </tr>`;
+    });
+}
+
+function deleteCustomer(i){
+    customers.splice(i,1);
+    save();
+    renderCustomers();
+    updateDropdowns();
+}
+
+// RENDER ORDERS
+function renderOrders(){
+    orderTable.innerHTML = `
+    <tr><th>Product</th><th>Customer</th><th>Qty</th><th>Status</th><th>Update</th></tr>
+    `;
+    orders.forEach((o,i)=>{
+        orderTable.innerHTML += `
+        <tr>
+            <td>${o.product}</td>
+            <td>${o.customer}</td>
+            <td>${o.qty}</td>
+            <td>${o.status}</td>
+            <td>
+                <button class="status-btn" onclick="markDelivered(${i})">Deliver</button>
+            </td>
+        </tr>`;
+    });
+}
+
+function markDelivered(i){
+    orders[i].status = "Delivered";
+    save();
+    renderOrders();
+}
+
+// UPDATE DROPDOWN LISTS
+function updateDropdowns(){
+    orderProduct.innerHTML = products.map(p=>`<option>${p.name}</option>`).join("");
+    orderCustomer.innerHTML = customers.map(c=>`<option>${c.name}</option>`).join("");
+}
+
+// INITIAL LOAD
+renderProducts();
+renderCustomers();
+renderOrders();
+updateDropdowns();
+</script>
+
+</body>
+</html>
